@@ -1,10 +1,24 @@
 {% extends "base.html" %}
 
 {% block content %}
-<h1>Lista Società</h1>
+  <section class="section">
+    <div class="container">
+      <h1 class="title">
+        Società
+      </h1>
 <ul>
     {% for societa in societa_list %}
     <li>{{ societa.nome }} - {{ societa.citta }}</li>
     {% endfor %}
 </ul>
+
+<button class="button is-primary">Button</button>
+<button class="button is-link">Button</button>
+<button class="button is-info">Button</button>
+<button class="button is-success">Button</button>
+<button class="button is-warning">Button</button>
+<button class="button is-danger">Button</button>
+
+    </div>
+  </section>
 {% endblock %}
