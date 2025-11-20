@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1>Lista Società</h1>
+<ul>
+    {% for societa in societa_list %}
+    <li>{{ societa.nome }} - {{ societa.citta }}</li>
+    {% endfor %}
+</ul>
+{% endblock %}

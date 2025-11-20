@@ -1,0 +1,1 @@
+console.log("Core index.js loaded");
