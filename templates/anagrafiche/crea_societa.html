@@ -1,0 +1,10 @@
+<form method="post" action="">
+    {% csrf_token %}
+    <label for="nome">Nome Società:</label>
+    <input type="text" id="nome" name="nome" required><br>
+
+    <label for="codice_fiscale">Codice Fiscale:</label>
+    <input type="text" id="codice_fiscale" name="codice_fiscale" required><br>
+
+    <button type="submit">Invia</button>
+</form>
