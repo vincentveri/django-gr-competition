@@ -37,6 +37,7 @@ ALLOWED_HOSTS = []
 
 INSTALLED_APPS = [
     'anagrafiche.apps.AnagraficheConfig',
+    'competizioni.apps.CompetizioniConfig',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
