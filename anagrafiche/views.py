@@ -5,7 +5,7 @@ from django.contrib.auth.decorators import login_required
 from django.db import transaction
 from django.shortcuts import get_object_or_404, redirect, render
 
-from .forms import AccountForm, AtletaForm, AtletaFormSet, AttrezzoForm, esercizio_formset_class, SocietaForm
+from .forms import AccountForm, RegistrazioneSocietaForm, AtletaForm, AtletaFormSet, AttrezzoForm, esercizio_formset_class, SocietaForm
 from .models import Atleta, Attrezzo, Profilo, Societa
 
 
@@ -142,13 +142,15 @@ def registrazione(request):
         return redirect('lista_atleti')
 
     account_form = AccountForm(request.POST or None, prefix='account')
-    societa_form = SocietaForm(request.POST or None, prefix='societa')
+    societa_form = RegistrazioneSocietaForm(request.POST or None, prefix='societa')
 
     if request.method == 'POST' and account_form.is_valid() and societa_form.is_valid():
         # Create the user, its società and the link between them together, or not at all.
         with transaction.atomic():
             utente = account_form.save()
-            societa = societa_form.save()
+            societa = societa_form.save(commit=False)
+            societa.email = utente.email  # same email as the account
+            societa.save()
             Profilo.objects.create(utente=utente, societa=societa)
         login(request, utente)
         messages.success(request, "Registrazione completata.")

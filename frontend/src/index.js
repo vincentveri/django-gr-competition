@@ -5,15 +5,11 @@ const root = document.documentElement;
 // Theme toggle (initial theme is set by the inline script in base.html <head>)
 const toggle = document.getElementById("theme-toggle");
 if (toggle) {
-  const sync = () => {
-    toggle.textContent = root.getAttribute("data-theme") === "dark" ? "Chiaro" : "Scuro";
-  };
-  sync();
+  // Icons are switched in CSS (dark:hidden / dark:block), so only the attribute changes here.
   toggle.addEventListener("click", () => {
     const next = root.getAttribute("data-theme") === "dark" ? "light" : "dark";
     root.setAttribute("data-theme", next);
     try { localStorage.setItem("theme", next); } catch (e) {}
-    sync();
   });
 }
 

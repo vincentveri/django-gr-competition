@@ -173,13 +173,11 @@ class ModificaAtletaTests(TestCase):
 class AutenticazioneTests(TestCase):
     def _registrazione(self, **override):
         data = {
-            "account-username": "mario",
             "account-email": "mario@example.com",
             "account-password1": "Sup3rSegreta!xyz",
             "account-password2": "Sup3rSegreta!xyz",
             "societa-nome": "ASD Test",
             "societa-codice_fiscale": "ABC123",
-            "societa-email": "asd@example.com",
         }
         data.update(override)
         return data
@@ -196,13 +194,33 @@ class AutenticazioneTests(TestCase):
     def test_registration_creates_user_societa_and_profile(self):
         r = self.client.post("/registrazione/", self._registrazione())
         self.assertRedirects(r, "/atleti/")
-        user = get_user_model().objects.get(username="mario")
+        user = get_user_model().objects.get(username="mario@example.com")
         self.assertEqual(user.profilo.societa.nome, "ASD Test")
         self.assertEqual(Profilo.objects.count(), 1)
         self.assertEqual(self.client.get("/atleti/").status_code, 200)  # logged in
 
+    def test_email_is_username_and_societa_email(self):
+        self.client.post("/registrazione/", self._registrazione(**{"account-email": "Mario@Example.com"}))
+        user = get_user_model().objects.get()
+        self.assertEqual(user.username, "mario@example.com")
+        self.assertEqual(user.email, user.username)
+        self.assertEqual(user.profilo.societa.email, "mario@example.com")
+
+    def test_duplicate_email_rejected(self):
+        self.client.post("/registrazione/", self._registrazione())
+        self.client.post("/esci/")
+        r = self.client.post("/registrazione/", self._registrazione(**{"societa-codice_fiscale": "ZZZ"}))
+        self.assertEqual(r.status_code, 200)
+        self.assertEqual(get_user_model().objects.count(), 1)
+
+    def test_login_with_email_is_case_insensitive(self):
+        self.client.post("/registrazione/", self._registrazione())
+        self.client.post("/esci/")
+        r = self.client.post("/accedi/", {"username": "MARIO@example.com", "password": "Sup3rSegreta!xyz"})
+        self.assertRedirects(r, "/atleti/")
+
     def test_invalid_societa_creates_nothing(self):
-        r = self.client.post("/registrazione/", self._registrazione(**{"societa-email": ""}))
+        r = self.client.post("/registrazione/", self._registrazione(**{"societa-nome": ""}))
         self.assertEqual(r.status_code, 200)
         self.assertEqual(get_user_model().objects.count(), 0)
         self.assertEqual(Profilo.objects.count(), 0)
@@ -210,7 +228,7 @@ class AutenticazioneTests(TestCase):
     def test_duplicate_codice_fiscale_creates_nothing(self):
         self.client.post("/registrazione/", self._registrazione())
         self.client.post("/esci/")
-        r = self.client.post("/registrazione/", self._registrazione(**{"account-username": "luigi"}))
+        r = self.client.post("/registrazione/", self._registrazione(**{"account-email": "luigi@example.com"}))
         self.assertEqual(r.status_code, 200)
         self.assertEqual(get_user_model().objects.count(), 1)
 

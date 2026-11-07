@@ -151,21 +151,48 @@ class AccessoForm(AuthenticationForm):
         super().__init__(*args, **kwargs)
         for field in self.fields.values():
             field.widget.attrs["class"] = "input"
-        self.fields["username"].label = "Nome utente"
+        self.fields["username"].label = "Email"
         self.fields["password"].label = "Password"
+
+    def clean_username(self):
+        # Accounts are created with their (lower-cased) email as username.
+        username = self.cleaned_data["username"]
+        return username.lower() if "@" in username else username
 
 
 class AccountForm(UserCreationForm):
+    """Registration account: the email is also the username."""
+
     class Meta(UserCreationForm.Meta):
         model = get_user_model()
-        fields = ("username", "email")
+        fields = ("email",)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         for field in self.fields.values():
             field.widget.attrs["class"] = "input"
-        self.fields["username"].label = "Nome utente"
-        self.fields["email"].label = "Email account"
+        self.fields["email"].label = "Email"
         self.fields["email"].required = True
         self.fields["password1"].label = "Password"
         self.fields["password2"].label = "Conferma password"
+
+    def clean_email(self):
+        email = self.cleaned_data["email"].strip().lower()
+        user_model = get_user_model()
+        max_len = user_model._meta.get_field("username").max_length
+        if len(email) > max_len:
+            raise forms.ValidationError(f"L'email non pu\u00f2 superare {max_len} caratteri.")
+        if user_model.objects.filter(username__iexact=email).exists() or user_model.objects.filter(email__iexact=email).exists():
+            raise forms.ValidationError("Esiste gi\u00e0 un account con questa email.")
+        return email
+
+    def save(self, commit=True):
+        self.instance.username = self.cleaned_data["email"]
+        return super().save(commit)
+
+
+class RegistrazioneSocietaForm(SocietaForm):
+    """Società details at registration; its email is taken from the account."""
+
+    class Meta(SocietaForm.Meta):
+        fields = [f for f in SocietaForm.Meta.fields if f != "email"]

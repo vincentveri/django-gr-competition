@@ -7,5 +7,7 @@
   <div class="sm:col-span-4">{% include "anagrafiche/_field.html" with field=form.citta %}</div>
   <div class="sm:col-span-4">{% include "anagrafiche/_field.html" with field=form.cap %}</div>
   <div class="sm:col-span-6">{% include "anagrafiche/_field.html" with field=form.telefono %}</div>
+  {% if form.email %}
   <div class="sm:col-span-6">{% include "anagrafiche/_field.html" with field=form.email %}</div>
+  {% endif %}
 </div>
