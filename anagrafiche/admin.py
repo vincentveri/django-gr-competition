@@ -1,7 +1,7 @@
 from django.contrib import admin
 
 from .models import Attrezzo, Categoria, Livello, Societa
-from .models import Atleta, Competizione, Fascia
+from .models import Atleta, Competizione, Esercizio, Fascia
     
 
 admin.site.register(Attrezzo)
@@ -11,3 +11,4 @@ admin.site.register(Societa)
 admin.site.register(Atleta)
 admin.site.register(Competizione)
 admin.site.register(Fascia)
+admin.site.register(Esercizio)

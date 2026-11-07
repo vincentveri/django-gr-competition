@@ -26,3 +26,17 @@ if (burger && sidebar) {
     burger.setAttribute("aria-expanded", String(open));
   });
 }
+
+// Formset "add row" button (e.g. bulk athlete entry)
+const addRow = document.getElementById("add-row");
+if (addRow) {
+  addRow.addEventListener("click", () => {
+    const total = document.getElementById(addRow.dataset.total);
+    const template = document.getElementById(addRow.dataset.template);
+    const body = document.getElementById(addRow.dataset.body);
+    const index = parseInt(total.value, 10);
+    const html = template.innerHTML.replace(/__prefix__/g, String(index));
+    body.insertAdjacentHTML("beforeend", html);
+    total.value = String(index + 1);
+  });
+}

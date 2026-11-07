@@ -38,6 +38,10 @@
           <ul class="space-y-1">
             <li><a href="{% url 'lista_societa' %}" class="menu-link{% if current == 'lista_societa' %} is-active{% endif %}">Società</a></li>
             <li><a href="{% url 'crea_societa' %}" class="menu-link{% if current == 'crea_societa' %} is-active{% endif %}">Nuova società</a></li>
+            <li><a href="{% url 'lista_atleti' %}" class="menu-link{% if current == 'lista_atleti' %} is-active{% endif %}">Atleti</a></li>
+            <li><a href="{% url 'crea_atleta' %}" class="menu-link{% if current == 'crea_atleta' %} is-active{% endif %}">Nuovo atleta</a></li>
+            <li><a href="{% url 'crea_atleti_multipli' %}" class="menu-link{% if current == 'crea_atleti_multipli' %} is-active{% endif %}">Inserimento multiplo</a></li>
+            <li><a href="{% url 'lista_attrezzi' %}" class="menu-link{% if current == 'lista_attrezzi' or current == 'crea_attrezzo' %} is-active{% endif %}">Attrezzi</a></li>
           </ul>
         </nav>
         {% endwith %}

@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+
+{% block title %}Inserimento multiplo atleti · GR Competition{% endblock %}
+
+{% block content %}
+  <h1 class="mb-4">Inserimento multiplo atleti</h1>
+
+  <form method="post" action="" class="box space-y-6" novalidate>
+    {% csrf_token %}
+    {{ formset.management_form }}
+
+    {% for error in formset.non_form_errors %}
+      <p class="text-danger">{{ error }}</p>
+    {% endfor %}
+
+    <p class="text-muted">Compila una riga per atleta. Le righe vuote vengono ignorate; nome e cognome sono obbligatori.</p>
+
+    <div class="overflow-x-auto">
+      <table class="w-full min-w-[64rem] border-separate border-spacing-x-2 border-spacing-y-2 text-left">
+        <thead>
+          <tr class="text-muted">
+            <th class="w-[13%] font-medium">Nome <span class="text-danger">*</span></th>
+            <th class="w-[13%] font-medium">Cognome <span class="text-danger">*</span></th>
+            <th class="w-[8%] font-medium">Anno</th>
+            <th class="w-[18%] font-medium">Email</th>
+            <th class="w-[16%] font-medium">Società</th>
+            <th class="w-[11%] font-medium">Categoria</th>
+            <th class="w-[10%] font-medium">Fascia</th>
+            <th class="w-[11%] font-medium">Livello</th>
+          </tr>
+        </thead>
+        <tbody id="rows">
+          {% for form in formset %}
+            {% include "anagrafiche/_riga_atleta.html" %}
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <template id="empty-row">
+      {% with form=formset.empty_form %}
+        {% include "anagrafiche/_riga_atleta.html" %}
+      {% endwith %}
+    </template>
+
+    <div class="flex flex-wrap gap-3">
+      <button type="submit" class="btn">Salva</button>
+      <button type="button" id="add-row" class="menu-link w-auto cursor-pointer" data-total="id_atleti-TOTAL_FORMS" data-template="empty-row" data-body="rows">+ Aggiungi riga</button>
+      <a class="menu-link w-auto" href="{% url 'lista_atleti' %}">Annulla</a>
+    </div>
+  </form>
+{% endblock %}

@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+
+{% block title %}Nuovo attrezzo · GR Competition{% endblock %}
+
+{% block content %}
+  <h1 class="mb-4">Nuovo attrezzo</h1>
+
+  <form method="post" action="" class="box max-w-xl space-y-6" novalidate>
+    {% csrf_token %}
+
+    {% include "anagrafiche/_field.html" with field=form.nome %}
+
+    <div class="flex gap-3">
+      <button type="submit" class="btn">Salva</button>
+      <a class="menu-link w-auto" href="{% url 'lista_attrezzi' %}">Annulla</a>
+    </div>
+  </form>
+{% endblock %}

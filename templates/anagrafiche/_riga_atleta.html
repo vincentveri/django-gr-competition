@@ -1,0 +1,11 @@
+<tr class="align-top">
+  {% for hidden in form.hidden_fields %}{{ hidden }}{% endfor %}
+  <td>{% include "anagrafiche/_cell.html" with field=form.nome %}</td>
+  <td>{% include "anagrafiche/_cell.html" with field=form.cognome %}</td>
+  <td>{% include "anagrafiche/_cell.html" with field=form.anno_nascita %}</td>
+  <td>{% include "anagrafiche/_cell.html" with field=form.email %}</td>
+  <td>{% include "anagrafiche/_cell.html" with field=form.societa %}</td>
+  <td>{% include "anagrafiche/_cell.html" with field=form.categoria %}</td>
+  <td>{% include "anagrafiche/_cell.html" with field=form.fascia %}</td>
+  <td>{% include "anagrafiche/_cell.html" with field=form.livello %}</td>
+</tr>

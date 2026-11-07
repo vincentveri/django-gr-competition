@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+
+{% block title %}Nuovo atleta · GR Competition{% endblock %}
+
+{% block content %}
+  <h1 class="mb-4">Nuovo atleta</h1>
+
+  <form method="post" action="" class="box max-w-xl space-y-6" novalidate>
+    {% csrf_token %}
+
+    {% if form.non_field_errors %}
+      <p class="text-danger">{{ form.non_field_errors }}</p>
+    {% endif %}
+
+    {% include "anagrafiche/_atleta_fields.html" %}
+
+    <div class="flex gap-3">
+      <button type="submit" class="btn">Salva</button>
+      <a class="menu-link w-auto" href="{% url 'lista_atleti' %}">Annulla</a>
+    </div>
+  </form>
+{% endblock %}

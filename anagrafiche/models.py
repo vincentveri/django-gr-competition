@@ -1,3 +1,6 @@
+import os
+
+from django.core.validators import FileExtensionValidator
 from django.db import models
 
 
@@ -117,3 +120,37 @@ class Competizione(models.Model):
 
     def __str__(self):
         return self.nome
+
+
+def percorso_audio(instance, filename):
+    """Store uploads as esercizi/audio/<atleta_id>/<filename>."""
+    return os.path.join("esercizi", "audio", str(instance.atleta_id), filename)
+
+
+class Esercizio(models.Model):
+    """Exercise: the combination of an athlete and an apparatus, with its music."""
+
+    class Meta:
+        verbose_name = "Esercizio"
+        verbose_name_plural = "Esercizi"
+        constraints = [
+            models.UniqueConstraint(fields=["atleta", "attrezzo"], name="esercizio_unico_atleta_attrezzo"),
+        ]
+
+    atleta = models.ForeignKey(Atleta, on_delete=models.CASCADE, related_name="esercizi")
+    attrezzo = models.ForeignKey(Attrezzo, on_delete=models.CASCADE, related_name="esercizi")
+
+    # The file lives in MEDIA_ROOT; the database stores its relative path (including the filename).
+    audio = models.FileField(
+        upload_to=percorso_audio,
+        blank=True,
+        null=True,
+        validators=[FileExtensionValidator(["mp3", "wav", "m4a", "ogg"])],
+    )
+
+    @property
+    def nome_file_audio(self):
+        return os.path.basename(self.audio.name) if self.audio else ""
+
+    def __str__(self):
+        return f"{self.atleta} - {self.attrezzo}"

@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+
+{% block title %}Atleti · GR Competition{% endblock %}
+
+{% block content %}
+  <h1 class="mb-4">Atleti</h1>
+
+  {% if messages %}{% for message in messages %}<p class="mb-4 text-success">{{ message }}</p>{% endfor %}{% endif %}
+
+  <div class="box mb-4">
+    <ul>
+      {% for atleta in atleti_list %}
+        <li><a class="text-primary hover:underline" href="{% url 'dettaglio_atleta' atleta.pk %}">{{ atleta }}</a>{% if atleta.societa %} - {{ atleta.societa }}{% endif %}</li>
+      {% empty %}
+        <li class="text-muted">Nessun atleta presente.</li>
+      {% endfor %}
+    </ul>
+  </div>
+
+  <a class="btn" href="{% url 'crea_atleta' %}">Nuovo atleta</a>
+{% endblock %}

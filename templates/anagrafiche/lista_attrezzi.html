@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+
+{% block title %}Attrezzi · GR Competition{% endblock %}
+
+{% block content %}
+  <h1 class="mb-4">Attrezzi</h1>
+
+  <div class="box mb-4 max-w-xl">
+    <ul>
+      {% for attrezzo in attrezzi_list %}
+        <li>{{ attrezzo }}</li>
+      {% empty %}
+        <li class="text-muted">Nessun attrezzo presente.</li>
+      {% endfor %}
+    </ul>
+  </div>
+
+  <a class="btn" href="{% url 'crea_attrezzo' %}">Nuovo attrezzo</a>
+{% endblock %}
