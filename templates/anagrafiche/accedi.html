@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+
+{% block title %}Accedi · GR Competition{% endblock %}
+
+{% block content %}
+  <div class="mx-auto max-w-sm">
+    <h1 class="mb-4">Accedi</h1>
+
+    <form method="post" action="" class="box space-y-5" novalidate>
+      {% csrf_token %}
+      <input type="hidden" name="next" value="{{ next }}">
+
+      {% if form.non_field_errors %}
+        {% for error in form.non_field_errors %}<p class="text-danger">{{ error }}</p>{% endfor %}
+      {% endif %}
+
+      {% include "anagrafiche/_field.html" with field=form.username %}
+      {% include "anagrafiche/_field.html" with field=form.password %}
+
+      <button type="submit" class="btn w-full justify-center">Accedi</button>
+    </form>
+
+    <p class="mt-4 text-center text-muted">
+      Non hai un account? <a class="text-primary hover:underline" href="{% url 'registrazione' %}">Registrati</a>
+    </p>
+  </div>
+{% endblock %}

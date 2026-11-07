@@ -5,3 +5,6 @@
 {% for error in field.errors %}
   <p class="mt-1 text-danger">{{ error }}</p>
 {% endfor %}
+{% if field.help_text %}
+  <div class="mt-1 text-muted">{{ field.help_text|safe }}</div>
+{% endif %}

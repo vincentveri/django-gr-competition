@@ -10,9 +10,20 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase, override_settings
 from django.urls import reverse
 
-from .models import Atleta, Attrezzo, Esercizio
+from django.contrib.auth import get_user_model
+
+from .models import Atleta, Attrezzo, Esercizio, Profilo, Societa
 
 _MEDIA = tempfile.mkdtemp()
+
+
+def login_con_societa(client, username="tester", nome="Societa Uno"):
+    """Create a user with its own società and log them in. Returns the società."""
+    societa = Societa.objects.create(nome=nome, codice_fiscale=f"CF-{username}", email=f"{username}@example.com")
+    utente = get_user_model().objects.create_user(username, password="x")
+    Profilo.objects.create(utente=utente, societa=societa)
+    client.force_login(utente)
+    return societa
 
 
 @override_settings(MEDIA_ROOT=_MEDIA)
@@ -23,7 +34,8 @@ class DettaglioAtletaTests(TestCase):
         shutil.rmtree(_MEDIA, ignore_errors=True)
 
     def setUp(self):
-        self.atleta = Atleta.objects.create(nome="Ada", cognome="Rossi")
+        self.societa = login_con_societa(self.client)
+        self.atleta = Atleta.objects.create(nome="Ada", cognome="Rossi", societa=self.societa)
         self.fune = Attrezzo.objects.create(nome="Fune")
         self.palla = Attrezzo.objects.create(nome="Palla")
         self.url = reverse("dettaglio_atleta", args=[self.atleta.pk])
@@ -101,6 +113,9 @@ class DettaglioAtletaTests(TestCase):
 class InserimentoMultiploTests(TestCase):
     url = "/atleti/multiplo/"
 
+    def setUp(self):
+        self.societa = login_con_societa(self.client)
+
     def _data(self, rows):
         data = {"atleti-TOTAL_FORMS": len(rows), "atleti-INITIAL_FORMS": 0,
                 "atleti-MIN_NUM_FORMS": 0, "atleti-MAX_NUM_FORMS": 1000}
@@ -130,7 +145,8 @@ class InserimentoMultiploTests(TestCase):
 
 class ModificaAtletaTests(TestCase):
     def setUp(self):
-        self.atleta = Atleta.objects.create(nome="Ada", cognome="Rossi")
+        self.societa = login_con_societa(self.client)
+        self.atleta = Atleta.objects.create(nome="Ada", cognome="Rossi", societa=self.societa)
         self.url = reverse("dettaglio_atleta", args=[self.atleta.pk])
 
     def test_page_shows_both_forms(self):
@@ -152,3 +168,108 @@ class ModificaAtletaTests(TestCase):
         self.assertFalse(r.context["formset"].is_bound)
         self.atleta.refresh_from_db()
         self.assertEqual(self.atleta.nome, "Ada")
+
+
+class AutenticazioneTests(TestCase):
+    def _registrazione(self, **override):
+        data = {
+            "account-username": "mario",
+            "account-email": "mario@example.com",
+            "account-password1": "Sup3rSegreta!xyz",
+            "account-password2": "Sup3rSegreta!xyz",
+            "societa-nome": "ASD Test",
+            "societa-codice_fiscale": "ABC123",
+            "societa-email": "asd@example.com",
+        }
+        data.update(override)
+        return data
+
+    def test_pages_require_login(self):
+        for url in ["/atleti/", "/societa/", "/attrezzi/", "/atleti/multiplo/"]:
+            r = self.client.get(url)
+            self.assertRedirects(r, f"/accedi/?next={url}")
+
+    def test_auth_pages_load(self):
+        self.assertEqual(self.client.get("/accedi/").status_code, 200)
+        self.assertEqual(self.client.get("/registrazione/").status_code, 200)
+
+    def test_registration_creates_user_societa_and_profile(self):
+        r = self.client.post("/registrazione/", self._registrazione())
+        self.assertRedirects(r, "/atleti/")
+        user = get_user_model().objects.get(username="mario")
+        self.assertEqual(user.profilo.societa.nome, "ASD Test")
+        self.assertEqual(Profilo.objects.count(), 1)
+        self.assertEqual(self.client.get("/atleti/").status_code, 200)  # logged in
+
+    def test_invalid_societa_creates_nothing(self):
+        r = self.client.post("/registrazione/", self._registrazione(**{"societa-email": ""}))
+        self.assertEqual(r.status_code, 200)
+        self.assertEqual(get_user_model().objects.count(), 0)
+        self.assertEqual(Profilo.objects.count(), 0)
+
+    def test_duplicate_codice_fiscale_creates_nothing(self):
+        self.client.post("/registrazione/", self._registrazione())
+        self.client.post("/esci/")
+        r = self.client.post("/registrazione/", self._registrazione(**{"account-username": "luigi"}))
+        self.assertEqual(r.status_code, 200)
+        self.assertEqual(get_user_model().objects.count(), 1)
+
+    def test_login_and_logout(self):
+        get_user_model().objects.create_user("anna", password="Sup3rSegreta!xyz")
+        r = self.client.post("/accedi/", {"username": "anna", "password": "Sup3rSegreta!xyz"})
+        self.assertRedirects(r, "/atleti/")
+        self.client.post("/esci/")
+        self.assertEqual(self.client.get("/atleti/").status_code, 302)
+
+
+class IsolamentoSocietaTests(TestCase):
+    def setUp(self):
+        self.mia = login_con_societa(self.client, "mio", "Mia")
+        self.altra = Societa.objects.create(nome="Altra", codice_fiscale="CF-altra", email="a@example.com")
+        self.mio_atleta = Atleta.objects.create(nome="Mio", cognome="Atleta", societa=self.mia)
+        self.altro_atleta = Atleta.objects.create(nome="Altro", cognome="Atleta", societa=self.altra)
+
+    def test_list_shows_only_own_athletes(self):
+        r = self.client.get("/atleti/")
+        self.assertEqual(list(r.context["atleti_list"]), [self.mio_atleta])
+
+    def test_societa_list_shows_only_own(self):
+        r = self.client.get("/societa/")
+        self.assertEqual(list(r.context["societa_list"]), [self.mia])
+
+    def test_other_societa_athlete_is_404(self):
+        self.assertEqual(self.client.get(f"/atleti/{self.altro_atleta.pk}/").status_code, 404)
+        r = self.client.post(f"/atleti/{self.altro_atleta.pk}/", {"azione": "atleta", "nome": "X", "cognome": "Y"})
+        self.assertEqual(r.status_code, 404)
+        self.altro_atleta.refresh_from_db()
+        self.assertEqual(self.altro_atleta.nome, "Altro")
+
+    def test_new_athlete_is_forced_into_own_societa(self):
+        self.client.post("/atleti/nuovo/", {"nome": "Nuova", "cognome": "Atleta", "societa": self.altra.pk})
+        self.assertEqual(Atleta.objects.get(nome="Nuova").societa, self.mia)
+
+    def test_edit_cannot_move_athlete_to_other_societa(self):
+        self.client.post(f"/atleti/{self.mio_atleta.pk}/",
+                         {"azione": "atleta", "nome": "Mio", "cognome": "Atleta", "societa": self.altra.pk})
+        self.mio_atleta.refresh_from_db()
+        self.assertEqual(self.mio_atleta.societa, self.mia)
+
+    def test_bulk_insert_uses_own_societa(self):
+        data = {"atleti-TOTAL_FORMS": 1, "atleti-INITIAL_FORMS": 0, "atleti-MIN_NUM_FORMS": 0,
+                "atleti-MAX_NUM_FORMS": 1000, "atleti-0-nome": "B", "atleti-0-cognome": "C",
+                "atleti-0-societa": self.altra.pk}
+        self.client.post("/atleti/multiplo/", data)
+        self.assertEqual(Atleta.objects.get(nome="B").societa, self.mia)
+
+    def test_create_societa_forbidden_for_regular_user(self):
+        self.assertEqual(self.client.get("/societa/nuova/").status_code, 403)
+
+    def test_user_without_profile_sees_nothing(self):
+        self.client.force_login(get_user_model().objects.create_user("orfano", password="x"))
+        r = self.client.get("/atleti/")
+        self.assertEqual(list(r.context["atleti_list"]), [])
+
+    def test_superuser_sees_everything(self):
+        self.client.force_login(get_user_model().objects.create_superuser("admin", "a@example.com", "x"))
+        self.assertEqual(self.client.get("/atleti/").context["atleti_list"].count(), 2)
+        self.assertEqual(self.client.get("/societa/nuova/").status_code, 200)

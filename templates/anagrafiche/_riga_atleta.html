@@ -4,7 +4,7 @@
   <td>{% include "anagrafiche/_cell.html" with field=form.cognome %}</td>
   <td>{% include "anagrafiche/_cell.html" with field=form.anno_nascita %}</td>
   <td>{% include "anagrafiche/_cell.html" with field=form.email %}</td>
-  <td>{% include "anagrafiche/_cell.html" with field=form.societa %}</td>
+  {% if form.societa %}<td>{% include "anagrafiche/_cell.html" with field=form.societa %}</td>{% endif %}
   <td>{% include "anagrafiche/_cell.html" with field=form.categoria %}</td>
   <td>{% include "anagrafiche/_cell.html" with field=form.fascia %}</td>
   <td>{% include "anagrafiche/_cell.html" with field=form.livello %}</td>

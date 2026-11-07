@@ -1,4 +1,6 @@
 from django import forms
+from django.contrib.auth import get_user_model
+from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
 from django.forms import BaseInlineFormSet, BaseModelFormSet, inlineformset_factory, modelformset_factory
 
 from .models import Atleta, Attrezzo, Esercizio, Societa
@@ -48,13 +50,18 @@ class AtletaForm(forms.ModelForm):
             "societa": "Società",
         }
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, societa=None, **kwargs):
+        # When a società is given, the athlete always belongs to it and the field is not offered.
         super().__init__(*args, **kwargs)
+        if societa is not None:
+            del self.fields["societa"]
+            self.instance.societa = societa
         for field in self.fields.values():
             field.widget.attrs["class"] = "input"
 
         for nome in ("societa", "categoria", "fascia", "livello"):
-            self.fields[nome].empty_label = EMPTY_LABEL
+            if nome in self.fields:
+                self.fields[nome].empty_label = EMPTY_LABEL
 
 
 class EsercizioForm(forms.ModelForm):
@@ -137,3 +144,28 @@ AtletaFormSet = modelformset_factory(
     formset=BaseAtletaFormSet,
     extra=5,
 )
+
+
+class AccessoForm(AuthenticationForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field in self.fields.values():
+            field.widget.attrs["class"] = "input"
+        self.fields["username"].label = "Nome utente"
+        self.fields["password"].label = "Password"
+
+
+class AccountForm(UserCreationForm):
+    class Meta(UserCreationForm.Meta):
+        model = get_user_model()
+        fields = ("username", "email")
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field in self.fields.values():
+            field.widget.attrs["class"] = "input"
+        self.fields["username"].label = "Nome utente"
+        self.fields["email"].label = "Email account"
+        self.fields["email"].required = True
+        self.fields["password1"].label = "Password"
+        self.fields["password2"].label = "Conferma password"
