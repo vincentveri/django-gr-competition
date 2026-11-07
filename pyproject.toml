@@ -1,0 +1,29 @@
+[project]
+name = "django-gr-competition"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "Vincent Veri", email = "vincent.veri@gmail.com" }
+]
+requires-python = ">=3.12"
+dependencies = [
+    "django>=6.1.3",
+    "dotenv>=0.9.9",
+    "psycopg2>=2.9.13",
+]
+
+[project.scripts]
+django-gr-competition = "django_gr_competition:main"
+
+[build-system]
+requires = ["uv_build>=0.13.7,<0.14.0"]
+build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "django-debug-toolbar>=8.0.0",
+]
+prod = [
+    "gunicorn>=26.2.0",
+]

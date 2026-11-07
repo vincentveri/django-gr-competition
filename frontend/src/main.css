@@ -1,0 +1,111 @@
+/* ==========================================================================
+   GR Competition – Tailwind theme
+   --------------------------------------------------------------------------
+   PALETTE (the only colors allowed in this project – use the semantic
+   Tailwind utilities below, e.g. bg-surface, text-muted, border-line,
+   bg-primary; never raw hex or default Tailwind colors):
+
+                  light      dark
+   primary        #4f46e5    #818cf8   (indigo)
+   background     #f8fafc    #0f172a
+   surface        #ffffff    #1e293b   (navbar, sidebar, boxes, inputs)
+   line           #e2e8f0    #334155   (borders)
+   text           #0f172a    #e2e8f0
+   muted          #64748b    #94a3b8
+   success        #16a34a    #4ade80
+   warning        #d97706    #fbbf24
+   danger         #dc2626    #f87171
+   ========================================================================== */
+
+@import "tailwindcss";
+@source "../../templates";
+
+/* Dark mode is driven by <html data-theme="dark"> */
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
+/* Palette values per theme */
+:root,
+:root[data-theme="light"] {
+  --gr-primary: #4f46e5;
+  --gr-primary-text: #ffffff;
+  --gr-background: #f8fafc;
+  --gr-surface: #ffffff;
+  --gr-line: #e2e8f0;
+  --gr-text: #0f172a;
+  --gr-muted: #64748b;
+  --gr-success: #16a34a;
+  --gr-warning: #d97706;
+  --gr-danger: #dc2626;
+}
+
+:root[data-theme="dark"] {
+  --gr-primary: #818cf8;
+  --gr-primary-text: #0f172a;
+  --gr-background: #0f172a;
+  --gr-surface: #1e293b;
+  --gr-line: #334155;
+  --gr-text: #e2e8f0;
+  --gr-muted: #94a3b8;
+  --gr-success: #4ade80;
+  --gr-warning: #fbbf24;
+  --gr-danger: #f87171;
+}
+
+/* Replace Tailwind's default palette with ours */
+@theme inline {
+  --color-*: initial;
+  --color-primary: var(--gr-primary);
+  --color-on-primary: var(--gr-primary-text);
+  --color-background: var(--gr-background);
+  --color-surface: var(--gr-surface);
+  --color-line: var(--gr-line);
+  --color-text: var(--gr-text);
+  --color-muted: var(--gr-muted);
+  --color-success: var(--gr-success);
+  --color-warning: var(--gr-warning);
+  --color-danger: var(--gr-danger);
+  --color-transparent: transparent;
+  --color-current: currentColor;
+
+  /* Inter is highly legible at 14px */
+  --font-sans: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+@layer base {
+  html {
+    font-size: 14px;
+    background-color: var(--gr-background);
+  }
+  body {
+    @apply bg-background font-sans text-text antialiased;
+  }
+  h1 {
+    @apply text-2xl font-semibold;
+  }
+}
+
+@layer components {
+  .box {
+    @apply rounded-lg border border-line bg-surface p-5;
+  }
+  .label {
+    @apply mb-1 block font-medium;
+  }
+  .input {
+    @apply w-full rounded-md border border-line bg-surface px-3 py-2 text-text;
+    @apply focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary;
+  }
+  .btn {
+    @apply inline-flex cursor-pointer items-center rounded-md border border-transparent bg-primary px-4 py-2 font-medium text-on-primary;
+    @apply hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary;
+  }
+  .menu-label {
+    @apply mb-2 px-3 text-xs font-semibold uppercase tracking-wide text-muted;
+  }
+  .menu-link {
+    @apply block rounded-md px-3 py-2 text-text hover:bg-background hover:text-primary;
+  }
+  .menu-link.is-active {
+    @apply bg-primary text-on-primary hover:bg-primary hover:text-on-primary;
+  }
+}

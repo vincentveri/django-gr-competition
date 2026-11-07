@@ -1,10 +1,32 @@
-<form method="post" action="">
+{% extends "base.html" %}
+
+{% block title %}Nuova società · GR Competition{% endblock %}
+
+{% block content %}
+  <h1 class="mb-4">Nuova società</h1>
+
+  <form method="post" action="" class="box max-w-xl space-y-6" novalidate>
     {% csrf_token %}
-    <label for="nome">Nome Società:</label>
-    <input type="text" id="nome" name="nome" required><br>
 
-    <label for="codice_fiscale">Codice Fiscale:</label>
-    <input type="text" id="codice_fiscale" name="codice_fiscale" required><br>
+    {% if form.non_field_errors %}
+      <p class="text-danger">{{ form.non_field_errors }}</p>
+    {% endif %}
 
-    <button type="submit">Invia</button>
-</form>
+    <div class="grid gap-x-4 gap-y-5 sm:grid-cols-12">
+      <div class="sm:col-span-12">{% include "anagrafiche/_field.html" with field=form.nome %}</div>
+      <div class="sm:col-span-6">{% include "anagrafiche/_field.html" with field=form.codice_fiscale %}</div>
+      <div class="sm:col-span-6">{% include "anagrafiche/_field.html" with field=form.partita_iva %}</div>
+      <div class="sm:col-span-6">{% include "anagrafiche/_field.html" with field=form.indirizzo %}</div>
+      <div class="sm:col-span-2">{% include "anagrafiche/_field.html" with field=form.numero_civico %}</div>
+      <div class="sm:col-span-4">{% include "anagrafiche/_field.html" with field=form.citta %}</div>
+      <div class="sm:col-span-4">{% include "anagrafiche/_field.html" with field=form.cap %}</div>
+      <div class="sm:col-span-6">{% include "anagrafiche/_field.html" with field=form.telefono %}</div>
+      <div class="sm:col-span-6">{% include "anagrafiche/_field.html" with field=form.email %}</div>
+    </div>
+
+    <div class="flex gap-3">
+      <button type="submit" class="btn">Salva</button>
+      <a class="menu-link w-auto" href="{% url 'lista_societa' %}">Annulla</a>
+    </div>
+  </form>
+{% endblock %}

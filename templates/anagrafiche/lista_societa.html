@@ -1,24 +1,19 @@
 {% extends "base.html" %}
 
+{% block title %}Società · GR Competition{% endblock %}
+
 {% block content %}
-  <section class="section">
-    <div class="container">
-      <h1 class="title">
-        Società
-      </h1>
-<ul>
-    {% for societa in societa_list %}
-    <li>{{ societa.nome }} - {{ societa.citta }}</li>
-    {% endfor %}
-</ul>
+  <h1 class="mb-4">Società</h1>
 
-<button class="button is-primary">Button</button>
-<button class="button is-link">Button</button>
-<button class="button is-info">Button</button>
-<button class="button is-success">Button</button>
-<button class="button is-warning">Button</button>
-<button class="button is-danger">Button</button>
+  <div class="box mb-4">
+    <ul>
+      {% for societa in societa_list %}
+        <li>{{ societa.nome }} - {{ societa.citta }}</li>
+      {% empty %}
+        <li class="text-muted">Nessuna società presente.</li>
+      {% endfor %}
+    </ul>
+  </div>
 
-    </div>
-  </section>
+  <a class="btn" href="{% url 'crea_societa' %}">Nuova società</a>
 {% endblock %}

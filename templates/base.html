@@ -1,22 +1,55 @@
-{% load static %}
-
-<!DOCTYPE html>
-<html lang="en">
+{% load static %}<!DOCTYPE html>
+<html lang="it" data-theme="light">
   <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>GR Competition Manager</title>
-    <link rel="stylesheet" href="{% static 'css/bulma.min.css' %}">
-    <link rel="stylesheet" href="{% static 'css/style.css' %}">
-    {% block head %}
-    {% endblock %}
+    <title>{% block title %}GR Competition Manager{% endblock %}</title>
+    <script>
+      (function () {
+        var t = null;
+        try { t = localStorage.getItem("theme"); } catch (e) {}
+        if (t !== "light" && t !== "dark") {
+          t = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+        }
+        document.documentElement.setAttribute("data-theme", t);
+      })();
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap">
+    <link rel="stylesheet" href="{% static 'dist/main.css' %}">
+    {% block head %}{% endblock %}
   </head>
-  <body>
-    {% block content %}
-    {% endblock %}
+  <body class="min-h-screen">
+    <nav class="sticky top-0 z-30 flex h-13 items-center justify-between border-b border-line bg-surface" aria-label="main navigation">
+      <a class="px-4 font-semibold text-primary" href="/">GR Competition</a>
+      <div class="flex items-center">
+        <button type="button" id="theme-toggle" class="h-13 cursor-pointer px-3 hover:text-primary" aria-label="Cambia tema">Scuro</button>
+        <button type="button" id="sidebar-burger" class="h-13 cursor-pointer px-3 hover:text-primary md:hidden" aria-label="Menu" aria-expanded="false" aria-controls="sidebar">Menu</button>
+      </div>
+    </nav>
 
-    {% block scripts %}
-    {% endblock %}
+    <div class="md:flex">
+      <aside id="sidebar" class="hidden border-b border-line bg-surface p-4 md:sticky md:top-13 md:block md:h-[calc(100vh-3.25rem)] md:w-60 md:flex-none md:overflow-y-auto md:border-r md:border-b-0" aria-label="Menu laterale">
+        {% block sidebar %}
+        {% with current=request.resolver_match.url_name %}
+        <nav>
+          <p class="menu-label">Anagrafiche</p>
+          <ul class="space-y-1">
+            <li><a href="{% url 'lista_societa' %}" class="menu-link{% if current == 'lista_societa' %} is-active{% endif %}">Società</a></li>
+            <li><a href="{% url 'crea_societa' %}" class="menu-link{% if current == 'crea_societa' %} is-active{% endif %}">Nuova società</a></li>
+          </ul>
+        </nav>
+        {% endwith %}
+        {% endblock %}
+      </aside>
+
+      <main class="min-w-0 flex-1 p-6">
+        {% block content %}{% endblock %}
+      </main>
+    </div>
+
+    <script src="{% static 'dist/main.js' %}"></script>
+    {% block scripts %}{% endblock %}
   </body>
 </html>
