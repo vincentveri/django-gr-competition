@@ -36,3 +36,14 @@ if (addRow) {
     total.value = String(index + 1);
   });
 }
+
+// Search filter for the athlete checklist (squadra form)
+const atletiSearch = document.getElementById("atleti-search");
+if (atletiSearch) {
+  atletiSearch.addEventListener("input", () => {
+    const q = atletiSearch.value.trim().toLowerCase();
+    document.querySelectorAll("[data-atleta-option]").forEach((el) => {
+      el.classList.toggle("hidden", !el.dataset.search.includes(q));
+    });
+  });
+}

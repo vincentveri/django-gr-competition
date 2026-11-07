@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+
+{% block title %}Squadre · GR Competition{% endblock %}
+
+{% block content %}
+  <h1 class="mb-4">Squadre</h1>
+
+  {% if messages %}{% for message in messages %}<p class="mb-4 text-success">{{ message }}</p>{% endfor %}{% endif %}
+
+  <div class="box mb-4 max-w-4xl">
+    <ul class="space-y-3">
+      {% for squadra in squadre_list %}
+        <li>
+          <span class="font-medium">{{ squadra.nome }}</span>
+          {% if squadra.anno %}<span class="text-muted">· {{ squadra.anno }}</span>{% endif %}
+          <div class="text-muted">
+            {{ squadra.atleti.all|length }} atleti{% if squadra.categoria %} · {{ squadra.categoria }}{% endif %}{% if squadra.fascia %} · {{ squadra.fascia }}{% endif %}{% if squadra.livello %} · {{ squadra.livello }}{% endif %}
+          </div>
+        </li>
+      {% empty %}
+        <li class="text-muted">Nessuna squadra presente.</li>
+      {% endfor %}
+    </ul>
+  </div>
+
+  <a class="btn" href="{% url 'crea_squadra' %}">Nuova squadra</a>
+{% endblock %}

@@ -1,0 +1,7 @@
+<div class="grid gap-x-4 gap-y-2 sm:grid-cols-12">
+  {% for hidden in form.hidden_fields %}{{ hidden }}{% endfor %}
+  <div class="sm:col-span-3">{% include "anagrafiche/_cell.html" with field=form.nome %}</div>
+  <div class="sm:col-span-3">{% include "anagrafiche/_cell.html" with field=form.cognome %}</div>
+  <div class="sm:col-span-2">{% include "anagrafiche/_cell.html" with field=form.anno_nascita %}</div>
+  <div class="sm:col-span-4">{% include "anagrafiche/_cell.html" with field=form.email %}</div>
+</div>

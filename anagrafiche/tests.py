@@ -12,7 +12,7 @@ from django.urls import reverse
 
 from django.contrib.auth import get_user_model
 
-from .models import Atleta, Attrezzo, Esercizio, Profilo, Societa
+from .models import Atleta, Attrezzo, Esercizio, Profilo, Societa, Squadra
 
 _MEDIA = tempfile.mkdtemp()
 
@@ -291,3 +291,56 @@ class IsolamentoSocietaTests(TestCase):
         self.client.force_login(get_user_model().objects.create_superuser("admin", "a@example.com", "x"))
         self.assertEqual(self.client.get("/atleti/").context["atleti_list"].count(), 2)
         self.assertEqual(self.client.get("/societa/nuova/").status_code, 200)
+
+
+class SquadreTests(TestCase):
+    url = "/squadre/nuova/"
+
+    def setUp(self):
+        self.mia = login_con_societa(self.client, "mio", "Mia")
+        self.altra = Societa.objects.create(nome="Altra", codice_fiscale="CF-altra", email="a@example.com")
+        self.mio_atleta = Atleta.objects.create(nome="Mio", cognome="Atleta", societa=self.mia)
+        self.altro_atleta = Atleta.objects.create(nome="Altro", cognome="Atleta", societa=self.altra)
+
+    def _data(self, atleti=(), nuovi=(), nome="Under 14"):
+        data = {"nome": nome, "anno": "2012", "atleti": [str(a.pk) for a in atleti],
+                "nuovi-TOTAL_FORMS": len(nuovi), "nuovi-INITIAL_FORMS": 0,
+                "nuovi-MIN_NUM_FORMS": 0, "nuovi-MAX_NUM_FORMS": 1000}
+        for i, (n, c) in enumerate(nuovi):
+            data[f"nuovi-{i}-nome"] = n
+            data[f"nuovi-{i}-cognome"] = c
+        return data
+
+    def test_list_shows_only_own_squadre(self):
+        mia = Squadra.objects.create(nome="Mia", societa=self.mia)
+        Squadra.objects.create(nome="Altrui", societa=self.altra)
+        r = self.client.get("/squadre/")
+        self.assertEqual(list(r.context["squadre_list"]), [mia])
+
+    def test_page_lists_only_own_athletes(self):
+        r = self.client.get(self.url)
+        self.assertEqual(list(r.context["atleti_disponibili"]), [self.mio_atleta])
+
+    def test_existing_and_new_athletes_saved_to_own_societa(self):
+        r = self.client.post(self.url, self._data(atleti=[self.mio_atleta], nuovi=[("Nuova", "Atleta")]))
+        self.assertRedirects(r, "/squadre/")
+        squadra = Squadra.objects.get(nome="Under 14")
+        self.assertEqual(squadra.societa, self.mia)
+        self.assertEqual(set(squadra.atleti.values_list("nome", flat=True)), {"Mio", "Nuova"})
+        self.assertEqual(Atleta.objects.get(nome="Nuova").societa, self.mia)
+
+    def test_other_societa_athlete_rejected(self):
+        r = self.client.post(self.url, self._data(atleti=[self.altro_atleta], nuovi=[("X", "Y")]))
+        self.assertEqual(r.status_code, 200)
+        self.assertEqual(Squadra.objects.count(), 0)
+        self.assertFalse(Atleta.objects.filter(nome="X").exists())
+
+    def test_needs_at_least_one_athlete(self):
+        r = self.client.post(self.url, self._data())
+        self.assertEqual(r.status_code, 200)
+        self.assertEqual(Squadra.objects.count(), 0)
+
+    def test_partial_new_athlete_rejected(self):
+        r = self.client.post(self.url, self._data(nuovi=[("Solo nome", "")]))
+        self.assertEqual(r.status_code, 200)
+        self.assertEqual(Squadra.objects.count(), 0)

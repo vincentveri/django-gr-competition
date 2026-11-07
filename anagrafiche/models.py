@@ -112,6 +112,26 @@ class Atleta(models.Model):
         return f"{self.nome} {self.cognome}"
     
 
+class Squadra(models.Model):
+
+    class Meta:
+        verbose_name = "Squadra"
+        verbose_name_plural = "Squadre"
+
+    nome = models.CharField(max_length=100)
+    anno = models.IntegerField(blank=True, null=True)
+
+    societa = models.ForeignKey(Societa, on_delete=models.SET_NULL, blank=True, null=True)
+    categoria = models.ForeignKey(Categoria, on_delete=models.SET_NULL, blank=True, null=True)
+    fascia = models.ForeignKey(Fascia, on_delete=models.SET_NULL, blank=True, null=True)
+    livello = models.ForeignKey(Livello, on_delete=models.SET_NULL, blank=True, null=True)
+
+    atleti = models.ManyToManyField(Atleta, blank=True, related_name="squadre")
+
+    def __str__(self):
+        return self.nome
+
+
 class Competizione(models.Model):
 
     class Meta:

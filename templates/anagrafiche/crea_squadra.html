@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+
+{% block title %}Nuova squadra · GR Competition{% endblock %}
+
+{% block content %}
+  <h1 class="mb-4">Nuova squadra</h1>
+
+  <form method="post" action="" class="box max-w-4xl space-y-8" novalidate>
+    {% csrf_token %}
+
+    <section class="space-y-5">
+      <h2 class="font-semibold">Squadra</h2>
+      <div class="grid gap-x-4 gap-y-5 sm:grid-cols-12">
+        <div class="sm:col-span-6">{% include "anagrafiche/_field.html" with field=squadra_form.nome %}</div>
+        <div class="sm:col-span-2">{% include "anagrafiche/_field.html" with field=squadra_form.anno %}</div>
+        {% if mostra_societa %}
+          <div class="sm:col-span-4">{% include "anagrafiche/_field.html" with field=squadra_form.societa %}</div>
+        {% endif %}
+        <div class="sm:col-span-4">{% include "anagrafiche/_field.html" with field=squadra_form.categoria %}</div>
+        <div class="sm:col-span-4">{% include "anagrafiche/_field.html" with field=squadra_form.fascia %}</div>
+        <div class="sm:col-span-4">{% include "anagrafiche/_field.html" with field=squadra_form.livello %}</div>
+      </div>
+    </section>
+
+    <section class="space-y-3">
+      <h2 class="font-semibold">Atleti esistenti</h2>
+      {% if errore_atleti %}<p class="text-danger">{{ errore_atleti }}</p>{% endif %}
+      <label class="label" for="atleti-search">Cerca tra gli atleti</label>
+      <input type="search" id="atleti-search" class="input" placeholder="Nome o cognome">
+      <div class="max-h-64 overflow-y-auto rounded-md border border-line p-2">
+        {% for atleta in atleti_disponibili %}
+          <label class="block cursor-pointer rounded px-2 py-1 hover:bg-background" data-atleta-option data-search="{{ atleta.nome|lower }} {{ atleta.cognome|lower }}">
+            <input type="checkbox" name="atleti" value="{{ atleta.pk }}" class="mr-2" {% if atleta.pk in selezionati %}checked{% endif %}>
+            {{ atleta.cognome }} {{ atleta.nome }}{% if mostra_societa and atleta.societa %} <span class="text-muted">· {{ atleta.societa }}</span>{% endif %}
+          </label>
+        {% empty %}
+          <p class="px-2 py-1 text-muted">Nessun atleta disponibile: inseriscine uno qui sotto.</p>
+        {% endfor %}
+      </div>
+    </section>
+
+    <section class="space-y-3">
+      <h2 class="font-semibold">Nuovi atleti</h2>
+      <p class="text-muted">Compila solo le righe da aggiungere: nome e cognome sono obbligatori. Le righe vuote vengono ignorate.</p>
+      {{ nuovi_formset.management_form }}
+      {% for error in nuovi_formset.non_form_errors %}<p class="text-danger">{{ error }}</p>{% endfor %}
+
+      <div class="hidden gap-x-4 text-muted sm:grid sm:grid-cols-12" aria-hidden="true">
+        <span class="sm:col-span-3">Nome <span class="text-danger">*</span></span>
+        <span class="sm:col-span-3">Cognome <span class="text-danger">*</span></span>
+        <span class="sm:col-span-2">Anno</span>
+        <span class="sm:col-span-4">Email</span>
+      </div>
+
+      <div id="rows-nuovi" class="space-y-3">
+        {% for form in nuovi_formset %}
+          {% include "anagrafiche/_riga_nuovo_atleta.html" %}
+        {% endfor %}
+      </div>
+
+      <template id="empty-row-nuovi">
+        {% with form=nuovi_formset.empty_form %}
+          {% include "anagrafiche/_riga_nuovo_atleta.html" %}
+        {% endwith %}
+      </template>
+
+      <button type="button" id="add-row" class="menu-link w-auto cursor-pointer" data-total="id_nuovi-TOTAL_FORMS" data-template="empty-row-nuovi" data-body="rows-nuovi">+ Aggiungi atleta</button>
+    </section>
+
+    <div class="flex flex-wrap gap-3">
+      <button type="submit" class="btn">Salva squadra</button>
+      <a class="menu-link w-auto" href="{% url 'lista_squadre' %}">Annulla</a>
+    </div>
+  </form>
+{% endblock %}

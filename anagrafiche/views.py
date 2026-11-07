@@ -5,8 +5,10 @@ from django.contrib.auth.decorators import login_required
 from django.db import transaction
 from django.shortcuts import get_object_or_404, redirect, render
 
-from .forms import AccountForm, RegistrazioneSocietaForm, AtletaForm, AtletaFormSet, AttrezzoForm, esercizio_formset_class, SocietaForm
-from .models import Atleta, Attrezzo, Profilo, Societa
+from .forms import AccountForm, RegistrazioneSocietaForm, AtletaForm, AtletaFormSet, AttrezzoForm, esercizio_formset_class, SocietaForm, SquadraForm
+from django.forms import modelformset_factory
+
+from .models import Atleta, Attrezzo, Profilo, Societa, Squadra
 
 
 def societa_utente(user):
@@ -33,6 +35,14 @@ def atleti_visibili(user):
 def societa_per_form(user):
     """The società to force on new/edited athletes (None lets superusers choose)."""
     return None if user.is_superuser else societa_utente(user)
+
+
+
+def squadre_visibili(user):
+    if user.is_superuser:
+        return Squadra.objects.all()
+    societa = societa_utente(user)
+    return Squadra.objects.filter(societa=societa) if societa else Squadra.objects.none()
 
 
 @login_required
@@ -159,4 +169,62 @@ def registrazione(request):
     return render(request, 'anagrafiche/registrazione.html', {
         'account_form': account_form,
         'societa_form': societa_form,
+    })
+
+
+@login_required
+def lista_squadre(request):
+    squadre = squadre_visibili(request.user).select_related('societa', 'categoria').prefetch_related('atleti')
+    return render(request, 'anagrafiche/lista_squadre.html', {'squadre_list': squadre})
+
+
+@login_required
+def crea_squadra(request):
+    """Single form: squadra details, existing own athletes (searchable) and new athletes on the fly."""
+    user = request.user
+    societa_fissa = societa_per_form(user)
+    NuoviFormSet = modelformset_factory(Atleta, form=AtletaForm, extra=3)
+    erroreAtleti = None
+
+    if request.method == 'POST':
+        squadra_form = SquadraForm(request.POST, societa=societa_fissa)
+        societa = None
+        if squadra_form.is_valid():
+            societa = societa_fissa or squadra_form.cleaned_data['societa']
+        nuovi_formset = NuoviFormSet(
+            request.POST, queryset=Atleta.objects.none(), prefix='nuovi',
+            form_kwargs={'societa': societa},
+        )
+        ids = request.POST.getlist('atleti')
+        esistenti = atleti_visibili(user).filter(pk__in=[i for i in ids if i.isdigit()]) if ids else Atleta.objects.none()
+        if ids and esistenti.count() != len(set(ids)):
+            erroreAtleti = "Uno o più atleti selezionati non sono validi."
+
+        if squadra_form.is_valid() and nuovi_formset.is_valid() and not erroreAtleti:
+            nuovi = [f for f in nuovi_formset.forms if f.has_changed()]
+            if not esistenti.exists() and not nuovi:
+                erroreAtleti = "Seleziona almeno un atleta o inseriscine uno nuovo."
+            else:
+                with transaction.atomic():
+                    squadra = squadra_form.save(commit=False)
+                    squadra.societa = societa
+                    squadra.save()
+                    atleti_nuovi = nuovi_formset.save()
+                    squadra.atleti.add(*esistenti, *atleti_nuovi)
+                messages.success(request, f"Squadra \u201c{squadra.nome}\u201d creata.")
+                return redirect('lista_squadre')
+    else:
+        squadra_form = SquadraForm(societa=societa_fissa)
+        nuovi_formset = NuoviFormSet(queryset=Atleta.objects.none(), prefix='nuovi',
+                                     form_kwargs={'societa': societa_fissa})
+        ids = []
+
+    atleti_disponibili = atleti_visibili(user).select_related('societa').order_by('cognome', 'nome')
+    return render(request, 'anagrafiche/crea_squadra.html', {
+        'squadra_form': squadra_form,
+        'nuovi_formset': nuovi_formset,
+        'atleti_disponibili': atleti_disponibili,
+        'selezionati': {int(i) for i in ids if i.isdigit()},
+        'errore_atleti': erroreAtleti,
+        'mostra_societa': societa_fissa is None,
     })

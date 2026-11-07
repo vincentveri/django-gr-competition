@@ -3,7 +3,7 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
 from django.forms import BaseInlineFormSet, BaseModelFormSet, inlineformset_factory, modelformset_factory
 
-from .models import Atleta, Attrezzo, Esercizio, Societa
+from .models import Atleta, Attrezzo, Esercizio, Societa, Squadra
 
 
 EMPTY_LABEL = "-- Seleziona"
@@ -196,3 +196,28 @@ class RegistrazioneSocietaForm(SocietaForm):
 
     class Meta(SocietaForm.Meta):
         fields = [f for f in SocietaForm.Meta.fields if f != "email"]
+
+
+class SquadraForm(forms.ModelForm):
+    """Squadra details. The società is forced for società users; superusers pick it."""
+
+    class Meta:
+        model = Squadra
+        fields = ["nome", "anno", "categoria", "fascia", "livello"]
+        labels = {"anno": "Anno"}
+
+    def __init__(self, *args, societa=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field in self.fields.values():
+            field.widget.attrs["class"] = "input"
+        for nome in ("categoria", "fascia", "livello"):
+            self.fields[nome].empty_label = EMPTY_LABEL
+        if societa is None:
+            self.fields["societa"] = forms.ModelChoiceField(
+                queryset=Societa.objects.all(),
+                label="Società",
+                empty_label=EMPTY_LABEL,
+                widget=forms.Select(attrs={"class": "input"}),
+            )
+        else:
+            self.instance.societa = societa
