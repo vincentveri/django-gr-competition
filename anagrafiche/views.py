@@ -65,8 +65,20 @@ def crea_societa(request):
 
 @login_required
 def lista_atleti(request):
-    atleti = atleti_visibili(request.user).select_related('societa', 'categoria')
-    return render(request, 'anagrafiche/lista_atleti.html', {'atleti_list': atleti})
+    atleti = atleti_visibili(request.user).select_related('categoria', 'fascia', 'livello').prefetch_related('esercizi')
+    attrezzi = list(Attrezzo.objects.filter(tipo=Attrezzo.TIPO_ATLETA).order_by('nome'))
+
+    # One row per athlete; for each apparatus a boolean: does the athlete have that exercise?
+    righe = []
+    for atleta in atleti:
+        assegnati = {e.attrezzo_id for e in atleta.esercizi.all()}
+        righe.append({'atleta': atleta, 'flags': [a.pk in assegnati for a in attrezzi]})
+
+    return render(request, 'anagrafiche/lista_atleti.html', {
+        'atleti_list': atleti,
+        'righe': righe,
+        'attrezzi': attrezzi,
+    })
 
 
 @login_required

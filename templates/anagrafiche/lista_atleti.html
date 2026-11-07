@@ -7,14 +7,43 @@
 
   {% if messages %}{% for message in messages %}<p class="mb-4 text-success">{{ message }}</p>{% endfor %}{% endif %}
 
-  <div class="box mb-4">
-    <ul>
-      {% for atleta in atleti_list %}
-        <li><a class="text-primary hover:underline" href="{% url 'dettaglio_atleta' atleta.pk %}">{{ atleta }}</a>{% if atleta.societa %} - {{ atleta.societa }}{% endif %}</li>
-      {% empty %}
-        <li class="text-muted">Nessun atleta presente.</li>
-      {% endfor %}
-    </ul>
+  <div class="box mb-4 overflow-x-auto p-0">
+    <table class="w-full border-collapse text-left">
+      <thead class="border-b border-line bg-background text-muted">
+        <tr>
+          <th class="px-2 py-1 font-medium">Cognome e nome</th>
+          <th class="px-2 py-1 font-medium">Anno</th>
+          <th class="px-2 py-1 font-medium">Categoria</th>
+          <th class="px-2 py-1 font-medium">Fascia</th>
+          <th class="px-2 py-1 font-medium">Livello</th>
+          {% for attrezzo in attrezzi %}
+            <th class="px-2 py-1 text-center font-medium">{{ attrezzo.nome }}</th>
+          {% endfor %}
+        </tr>
+      </thead>
+      <tbody>
+        {% for riga in righe %}
+          <tr class="odd:bg-surface even:bg-background">
+            <td class="px-2 py-1"><a class="text-primary hover:underline" href="{% url 'dettaglio_atleta' riga.atleta.pk %}">{{ riga.atleta.cognome }} {{ riga.atleta.nome }}</a></td>
+            <td class="px-2 py-1">{{ riga.atleta.anno_nascita|default_if_none:"" }}</td>
+            <td class="px-2 py-1">{{ riga.atleta.categoria|default_if_none:"" }}</td>
+            <td class="px-2 py-1">{{ riga.atleta.fascia|default_if_none:"" }}</td>
+            <td class="px-2 py-1">{{ riga.atleta.livello|default_if_none:"" }}</td>
+            {% for ok in riga.flags %}
+              <td class="px-2 py-1 text-center">
+                {% if ok %}
+                  <span class="text-success" title="Sì" aria-label="Sì">&#10003;</span>
+                {% else %}
+                  <span class="text-muted" title="No" aria-label="No">&ndash;</span>
+                {% endif %}
+              </td>
+            {% endfor %}
+          </tr>
+        {% empty %}
+          <tr><td class="px-2 py-1 text-muted" colspan="{{ attrezzi|length|add:7 }}">Nessun atleta presente.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
   </div>
 
   <a class="btn" href="{% url 'crea_atleta' %}">Nuovo atleta</a>
