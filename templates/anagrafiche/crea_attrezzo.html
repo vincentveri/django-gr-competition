@@ -10,6 +10,8 @@
 
     {% include "anagrafiche/_field.html" with field=form.nome %}
 
+    {% include "anagrafiche/_field.html" with field=form.tipo %}
+
     <div class="flex gap-3">
       <button type="submit" class="btn">Salva</button>
       <a class="menu-link w-auto" href="{% url 'lista_attrezzi' %}">Annulla</a>

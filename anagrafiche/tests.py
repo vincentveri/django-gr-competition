@@ -12,7 +12,7 @@ from django.urls import reverse
 
 from django.contrib.auth import get_user_model
 
-from .models import Atleta, Attrezzo, Esercizio, Profilo, Societa, Squadra
+from .models import Atleta, Attrezzo, Esercizio, EsercizioSquadra, Profilo, Societa, Squadra
 
 _MEDIA = tempfile.mkdtemp()
 
@@ -344,3 +344,90 @@ class SquadreTests(TestCase):
         r = self.client.post(self.url, self._data(nuovi=[("Solo nome", "")]))
         self.assertEqual(r.status_code, 200)
         self.assertEqual(Squadra.objects.count(), 0)
+
+
+class EsercizioSquadraTests(TestCase):
+    def setUp(self):
+        self.mia = login_con_societa(self.client, "mio", "Mia")
+        self.altra = Societa.objects.create(nome="Altra", codice_fiscale="CF-altra", email="a@example.com")
+        self.squadra = Squadra.objects.create(nome="Under 14", societa=self.mia)
+        self.altra_squadra = Squadra.objects.create(nome="Altrui", societa=self.altra)
+        self.fune = Attrezzo.objects.create(nome="Fune", tipo=Attrezzo.TIPO_SQUADRA)
+        self.palla = Attrezzo.objects.create(nome="Palla", tipo=Attrezzo.TIPO_SQUADRA)
+        self.url = reverse("dettaglio_squadra", args=[self.squadra.pk])
+
+    def _data(self, rows):
+        data = {"esercizi-TOTAL_FORMS": len(rows), "esercizi-INITIAL_FORMS": 0,
+                "esercizi-MIN_NUM_FORMS": 0, "esercizi-MAX_NUM_FORMS": 1000}
+        for i, (attrezzo, audio) in enumerate(rows):
+            data[f"esercizi-{i}-attrezzo"] = attrezzo.pk if attrezzo else ""
+            if audio:
+                data[f"esercizi-{i}-audio"] = audio
+        return data
+
+    def test_saves_squad_exercises_with_audio(self):
+        with override_settings(MEDIA_ROOT=_MEDIA):
+            r = self.client.post(self.url, self._data([
+                (self.fune, SimpleUploadedFile("fune.mp3", b"abc", "audio/mpeg")),
+                (self.palla, SimpleUploadedFile("palla.wav", b"def", "audio/wav")),
+            ]))
+        self.assertRedirects(r, self.url)
+        self.assertEqual(EsercizioSquadra.objects.filter(squadra=self.squadra).count(), 2)
+        e = EsercizioSquadra.objects.get(attrezzo=self.fune)
+        self.assertEqual(e.nome_file_audio, "fune.mp3")
+        self.assertIn(f"esercizi/squadre/{self.squadra.pk}/", e.audio.name)
+
+    def test_audio_required_for_chosen_attrezzo(self):
+        r = self.client.post(self.url, self._data([(self.fune, None)]))
+        self.assertEqual(r.status_code, 200)
+        self.assertEqual(EsercizioSquadra.objects.count(), 0)
+
+    def test_duplicate_attrezzo_rejected(self):
+        with override_settings(MEDIA_ROOT=_MEDIA):
+            r = self.client.post(self.url, self._data([
+                (self.fune, SimpleUploadedFile("a.mp3", b"abc")),
+                (self.fune, SimpleUploadedFile("b.mp3", b"abc")),
+            ]))
+        self.assertEqual(r.status_code, 200)
+        self.assertEqual(EsercizioSquadra.objects.count(), 0)
+
+    def test_at_least_one_required(self):
+        r = self.client.post(self.url, self._data([(None, None)]))
+        self.assertEqual(r.status_code, 200)
+        self.assertEqual(EsercizioSquadra.objects.count(), 0)
+
+    def test_other_societa_squadra_is_404(self):
+        url = reverse("dettaglio_squadra", args=[self.altra_squadra.pk])
+        self.assertEqual(self.client.get(url).status_code, 404)
+        self.assertEqual(self.client.post(url, self._data([(self.fune, None)])).status_code, 404)
+
+
+class TipoAttrezzoTests(TestCase):
+    def setUp(self):
+        self.mia = login_con_societa(self.client, "mio", "Mia")
+        self.atleta = Atleta.objects.create(nome="A", cognome="B", societa=self.mia)
+        self.squadra = Squadra.objects.create(nome="S", societa=self.mia)
+        self.fune = Attrezzo.objects.create(nome="Fune")  # default: atleta
+        self.nastro = Attrezzo.objects.create(nome="Nastro", tipo=Attrezzo.TIPO_SQUADRA)
+
+    def test_default_is_atleta(self):
+        self.assertEqual(self.fune.tipo, Attrezzo.TIPO_ATLETA)
+
+    def test_athlete_page_offers_only_atleta_attrezzi(self):
+        r = self.client.get(f"/atleti/{self.atleta.pk}/")
+        choices = list(r.context["formset"].empty_form.fields["attrezzo"].queryset)
+        self.assertEqual(choices, [self.fune])
+
+    def test_squadra_page_offers_only_squadra_attrezzi(self):
+        r = self.client.get(f"/squadre/{self.squadra.pk}/")
+        choices = list(r.context["formset"].empty_form.fields["attrezzo"].queryset)
+        self.assertEqual(choices, [self.nastro])
+
+    def test_athlete_cannot_use_squadra_attrezzo(self):
+        data = {"azione": "esercizi", "esercizi-TOTAL_FORMS": 1, "esercizi-INITIAL_FORMS": 0,
+                "esercizi-MIN_NUM_FORMS": 0, "esercizi-MAX_NUM_FORMS": 1000,
+                "esercizi-0-attrezzo": self.nastro.pk,
+                "esercizi-0-audio": SimpleUploadedFile("n.mp3", b"abc")}
+        r = self.client.post(f"/atleti/{self.atleta.pk}/", data)
+        self.assertEqual(r.status_code, 200)
+        self.assertEqual(Esercizio.objects.count(), 0)

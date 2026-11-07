@@ -8,7 +8,7 @@
   <div class="box mb-4 max-w-xl">
     <ul>
       {% for attrezzo in attrezzi_list %}
-        <li>{{ attrezzo }}</li>
+        <li>{{ attrezzo }} <span class="text-muted">· {{ attrezzo.get_tipo_display }}</span></li>
       {% empty %}
         <li class="text-muted">Nessun attrezzo presente.</li>
       {% endfor %}

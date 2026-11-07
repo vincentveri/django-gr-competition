@@ -11,7 +11,7 @@
     <ul class="space-y-3">
       {% for squadra in squadre_list %}
         <li>
-          <span class="font-medium">{{ squadra.nome }}</span>
+          <a class="font-medium text-primary hover:underline" href="{% url 'dettaglio_squadra' squadra.pk %}">{{ squadra.nome }}</a>
           {% if squadra.anno %}<span class="text-muted">· {{ squadra.anno }}</span>{% endif %}
           <div class="text-muted">
             {{ squadra.atleti.all|length }} atleti{% if squadra.categoria %} · {{ squadra.categoria }}{% endif %}{% if squadra.fascia %} · {{ squadra.fascia }}{% endif %}{% if squadra.livello %} · {{ squadra.livello }}{% endif %}

@@ -20,6 +20,7 @@ urlpatterns = [
     path('atleti/nuovo/', views.crea_atleta, name='crea_atleta'),
     path('squadre/', views.lista_squadre, name='lista_squadre'),
     path('squadre/nuova/', views.crea_squadra, name='crea_squadra'),
+    path('squadre/<int:pk>/', views.dettaglio_squadra, name='dettaglio_squadra'),
     path('attrezzi/', views.lista_attrezzi, name='lista_attrezzi'),
     path('attrezzi/nuovo/', views.crea_attrezzo, name='crea_attrezzo'),
 ]

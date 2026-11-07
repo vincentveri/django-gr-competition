@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+
+{% block title %}{{ squadra.nome }} · GR Competition{% endblock %}
+
+{% block content %}
+  <h1 class="mb-1">{{ squadra.nome }}</h1>
+  <p class="mb-4 text-muted">{% if squadra.societa %}{{ squadra.societa }}{% else %}Nessuna società{% endif %}</p>
+
+  {% if messages %}
+    {% for message in messages %}
+      <p class="mb-4 text-success">{{ message }}</p>
+    {% endfor %}
+  {% endif %}
+
+  <form method="post" enctype="multipart/form-data" class="box max-w-xl space-y-6" novalidate>
+    {% csrf_token %}
+    <h2 class="font-semibold">Esercizi di squadra</h2>
+    <p class="text-muted">Carica almeno un esercizio. Gli altri sono facoltativi. Il file audio è obbligatorio per ogni attrezzo selezionato.</p>
+
+    {{ formset.management_form }}
+
+    {% for error in formset.non_form_errors %}
+      <p class="text-danger">{{ error }}</p>
+    {% endfor %}
+
+    {% for form in formset %}
+      <div class="space-y-3 border-b border-line pb-5 last:border-b-0 last:pb-0">
+        {% for hidden in form.hidden_fields %}{{ hidden }}{% endfor %}
+        {% if form.non_field_errors %}<p class="text-danger">{{ form.non_field_errors }}</p>{% endif %}
+
+        <div class="grid gap-x-4 gap-y-5 sm:grid-cols-12">
+          <div class="sm:col-span-4">{% include "anagrafiche/_field.html" with field=form.attrezzo %}</div>
+          <div class="sm:col-span-8">
+            <label class="label" for="{{ form.audio.id_for_label }}">File audio <span class="font-normal text-muted">(obbligatorio se scegli un attrezzo)</span></label>
+            {% if form.instance.audio %}
+              <p class="mb-2 break-all">
+                <a class="text-primary hover:underline" href="{{ form.instance.audio.url }}" target="_blank" rel="noopener">{{ form.instance.nome_file_audio }}</a>
+              </p>
+              <audio class="mb-2 w-full" controls preload="none" src="{{ form.instance.audio.url }}"></audio>
+            {% endif %}
+            <input type="file" name="{{ form.audio.html_name }}" id="{{ form.audio.id_for_label }}" class="input" accept=".mp3,.wav,.m4a,.ogg,audio/*">
+            {% for error in form.audio.errors %}<p class="mt-1 text-danger">{{ error }}</p>{% endfor %}
+          </div>
+        </div>
+
+        {% if form.instance.pk %}
+          <label class="flex items-center gap-2 text-muted">
+            {{ form.DELETE }} Rimuovi questo esercizio
+          </label>
+        {% endif %}
+      </div>
+    {% empty %}
+      <p class="text-muted">Nessun attrezzo disponibile. <a class="text-primary hover:underline" href="{% url 'crea_attrezzo' %}">Aggiungi un attrezzo</a>.</p>
+    {% endfor %}
+
+    <div class="flex gap-3">
+      <button type="submit" class="btn">Salva esercizi</button>
+      <a class="menu-link w-auto" href="{% url 'lista_squadre' %}">Indietro</a>
+    </div>
+  </form>
+{% endblock %}

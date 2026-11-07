@@ -11,7 +11,13 @@ class Attrezzo(models.Model):
         verbose_name = "Attrezzo"
         verbose_name_plural = "Attrezzi"
 
+    TIPO_ATLETA = "atleta"
+    TIPO_SQUADRA = "squadra"
+    TIPO_CHOICES = [(TIPO_ATLETA, "Atleta"), (TIPO_SQUADRA, "Squadra")]
+
     nome = models.CharField(max_length=100)
+    # Which kind of exercise the apparatus is shown for.
+    tipo = models.CharField(max_length=10, choices=TIPO_CHOICES, default=TIPO_ATLETA)
 
     def __str__(self):
         return self.nome
@@ -157,6 +163,11 @@ class Competizione(models.Model):
         return self.nome
 
 
+def percorso_audio_squadra(instance, filename):
+    """Store uploads as esercizi/squadre/<squadra_id>/<filename>."""
+    return os.path.join("esercizi", "squadre", str(instance.squadra_id), filename)
+
+
 def percorso_audio(instance, filename):
     """Store uploads as esercizi/audio/<atleta_id>/<filename>."""
     return os.path.join("esercizi", "audio", str(instance.atleta_id), filename)
@@ -189,3 +200,31 @@ class Esercizio(models.Model):
 
     def __str__(self):
         return f"{self.atleta} - {self.attrezzo}"
+
+
+class EsercizioSquadra(models.Model):
+    """Squad exercise: the combination of a squadra and an apparatus, with its music."""
+
+    class Meta:
+        verbose_name = "Esercizio di squadra"
+        verbose_name_plural = "Esercizi di squadra"
+        constraints = [
+            models.UniqueConstraint(fields=["squadra", "attrezzo"], name="esercizio_squadra_unico"),
+        ]
+
+    squadra = models.ForeignKey(Squadra, on_delete=models.CASCADE, related_name="esercizi")
+    attrezzo = models.ForeignKey(Attrezzo, on_delete=models.CASCADE, related_name="esercizi_squadra")
+
+    audio = models.FileField(
+        upload_to=percorso_audio_squadra,
+        blank=True,
+        null=True,
+        validators=[FileExtensionValidator(["mp3", "wav", "m4a", "ogg"])],
+    )
+
+    @property
+    def nome_file_audio(self):
+        return os.path.basename(self.audio.name) if self.audio else ""
+
+    def __str__(self):
+        return f"{self.squadra} - {self.attrezzo}"

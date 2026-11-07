@@ -3,7 +3,7 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
 from django.forms import BaseInlineFormSet, BaseModelFormSet, inlineformset_factory, modelformset_factory
 
-from .models import Atleta, Attrezzo, Esercizio, Societa, Squadra
+from .models import Atleta, Attrezzo, Esercizio, EsercizioSquadra, Societa, Squadra
 
 
 EMPTY_LABEL = "-- Seleziona"
@@ -74,6 +74,7 @@ class EsercizioForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         self.fields["attrezzo"].widget.attrs["class"] = "input"
         self.fields["attrezzo"].empty_label = EMPTY_LABEL
+        self.fields["attrezzo"].queryset = Attrezzo.objects.filter(tipo=Attrezzo.TIPO_ATLETA)
         self.fields["audio"].widget.attrs.update({
             "class": "input",
             "accept": ".mp3,.wav,.m4a,.ogg,audio/*",
@@ -122,11 +123,13 @@ def esercizio_formset_class(extra):
 class AttrezzoForm(forms.ModelForm):
     class Meta:
         model = Attrezzo
-        fields = ["nome"]
+        fields = ["nome", "tipo"]
+        labels = {"tipo": "Mostrato per"}
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields["nome"].widget.attrs["class"] = "input"
+        for field in self.fields.values():
+            field.widget.attrs["class"] = "input"
 
 
 class BaseAtletaFormSet(BaseModelFormSet):
@@ -221,3 +224,25 @@ class SquadraForm(forms.ModelForm):
             )
         else:
             self.instance.societa = societa
+
+
+class EsercizioSquadraForm(EsercizioForm):
+    """Same rules as the athlete exercise form, but only squad apparatus are offered."""
+
+    class Meta(EsercizioForm.Meta):
+        model = EsercizioSquadra
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["attrezzo"].queryset = Attrezzo.objects.filter(tipo=Attrezzo.TIPO_SQUADRA)
+
+
+def esercizio_squadra_formset_class(extra):
+    return inlineformset_factory(
+        Squadra,
+        EsercizioSquadra,
+        form=EsercizioSquadraForm,
+        formset=BaseEsercizioFormSet,
+        extra=extra,
+        can_delete=True,
+    )

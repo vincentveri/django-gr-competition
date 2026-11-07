@@ -5,10 +5,10 @@ from django.contrib.auth.decorators import login_required
 from django.db import transaction
 from django.shortcuts import get_object_or_404, redirect, render
 
-from .forms import AccountForm, RegistrazioneSocietaForm, AtletaForm, AtletaFormSet, AttrezzoForm, esercizio_formset_class, SocietaForm, SquadraForm
+from .forms import AccountForm, RegistrazioneSocietaForm, AtletaForm, AtletaFormSet, AttrezzoForm, esercizio_formset_class, esercizio_squadra_formset_class, SocietaForm, SquadraForm
 from django.forms import modelformset_factory
 
-from .models import Atleta, Attrezzo, Profilo, Societa, Squadra
+from .models import Atleta, Attrezzo, EsercizioSquadra, Profilo, Societa, Squadra
 
 
 def societa_utente(user):
@@ -83,7 +83,7 @@ def dettaglio_atleta(request, pk):
     atleta = get_object_or_404(atleti_visibili(request.user), pk=pk)
 
     # One blank exercise row for each apparatus not yet assigned to this athlete.
-    libere = Attrezzo.objects.exclude(esercizi__atleta=atleta).count()
+    libere = Attrezzo.objects.filter(tipo=Attrezzo.TIPO_ATLETA).exclude(esercizi__atleta=atleta).count()
     FormSet = esercizio_formset_class(extra=libere)
 
     # The page holds two independent forms, told apart by the submit button's "azione" value.
@@ -112,6 +112,25 @@ def dettaglio_atleta(request, pk):
         'form': form,
         'formset': formset,
     })
+
+
+@login_required
+def dettaglio_squadra(request, pk):
+    squadra = get_object_or_404(squadre_visibili(request.user), pk=pk)
+
+    # One blank row for each apparatus not yet assigned to this squadra.
+    libere = Attrezzo.objects.filter(tipo=Attrezzo.TIPO_SQUADRA).exclude(esercizi_squadra__squadra=squadra).count()
+    FormSet = esercizio_squadra_formset_class(extra=libere)
+
+    if request.method == 'POST':
+        formset = FormSet(request.POST, request.FILES, instance=squadra)
+        if formset.is_valid():
+            formset.save()
+            messages.success(request, "Esercizi della squadra salvati.")
+            return redirect('dettaglio_squadra', pk=squadra.pk)
+    else:
+        formset = FormSet(instance=squadra)
+    return render(request, 'anagrafiche/dettaglio_squadra.html', {'squadra': squadra, 'formset': formset})
 
 
 @login_required
