@@ -45,11 +45,10 @@
       {{ nuovi_formset.management_form }}
       {% for error in nuovi_formset.non_form_errors %}<p class="text-danger">{{ error }}</p>{% endfor %}
 
-      <div class="hidden gap-x-4 text-muted sm:grid sm:grid-cols-12" aria-hidden="true">
-        <span class="sm:col-span-3">Nome <span class="text-danger">*</span></span>
-        <span class="sm:col-span-3">Cognome <span class="text-danger">*</span></span>
-        <span class="sm:col-span-2">Anno</span>
-        <span class="sm:col-span-4">Email</span>
+      <div class="hidden gap-x-4 text-muted sm:grid sm:grid-cols-[18fr_22fr_11fr]" aria-hidden="true">
+        <span>Nome <span class="text-danger">*</span></span>
+        <span>Cognome <span class="text-danger">*</span></span>
+        <span>Anno di nascita</span>
       </div>
 
       <div id="rows-nuovi" class="space-y-3">

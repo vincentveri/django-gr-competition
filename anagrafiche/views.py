@@ -85,7 +85,7 @@ def crea_societa(request):
 @login_required
 def lista_atleti(request):
     atleti = atleti_visibili(request.user).select_related('categoria', 'fascia', 'livello').prefetch_related('esercizi')
-    attrezzi = list(Attrezzo.objects.filter(tipo=Attrezzo.TIPO_ATLETA).order_by('nome'))
+    attrezzi = list(Attrezzo.objects.filter(tipo=Attrezzo.TIPO_ATLETA, is_active=True).order_by('nome'))
 
     # One row per athlete; for each apparatus a boolean: does the athlete have that exercise?
     righe = []
@@ -114,7 +114,7 @@ def dettaglio_atleta(request, pk):
     atleta = get_object_or_404(atleti_visibili(request.user), pk=pk)
 
     # One blank exercise row for each apparatus not yet assigned to this athlete.
-    libere = Attrezzo.objects.filter(tipo=Attrezzo.TIPO_ATLETA).exclude(esercizi__atleta=atleta).count()
+    libere = Attrezzo.objects.filter(tipo=Attrezzo.TIPO_ATLETA, is_active=True).exclude(esercizi__atleta=atleta).count()
     FormSet = esercizio_formset_class(extra=libere)
 
     # The page holds two independent forms, told apart by the submit button's "azione" value.
@@ -150,7 +150,7 @@ def dettaglio_squadra(request, pk):
     squadra = get_object_or_404(squadre_visibili(request.user), pk=pk)
 
     # One blank row for each apparatus not yet assigned to this squadra.
-    libere = Attrezzo.objects.filter(tipo=Attrezzo.TIPO_SQUADRA).exclude(esercizi_squadra__squadra=squadra).count()
+    libere = Attrezzo.objects.filter(tipo=Attrezzo.TIPO_SQUADRA, is_active=True).exclude(esercizi_squadra__squadra=squadra).count()
     FormSet = esercizio_squadra_formset_class(extra=libere)
 
     if request.method == 'POST':

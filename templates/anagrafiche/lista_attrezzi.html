@@ -5,14 +5,33 @@
 {% block content %}
   <h1 class="mb-4">Attrezzi</h1>
 
-  <div class="box mb-4 max-w-xl">
-    <ul>
-      {% for attrezzo in attrezzi_list %}
-        <li>{{ attrezzo }} <span class="text-muted">· {{ attrezzo.get_tipo_display }}</span></li>
-      {% empty %}
-        <li class="text-muted">Nessun attrezzo presente.</li>
-      {% endfor %}
-    </ul>
+  <div class="box mb-4 max-w-3xl overflow-x-auto p-0">
+    <table class="w-full border-collapse text-left">
+      <thead class="border-b border-line bg-background text-muted">
+        <tr>
+          <th class="px-2 py-1 font-medium">Nome</th>
+          <th class="px-2 py-1 font-medium">Mostrato per</th>
+          <th class="px-2 py-1 text-center font-medium">Attivo</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for attrezzo in attrezzi_list %}
+          <tr class="odd:bg-surface even:bg-background">
+            <td class="px-2 py-1">{{ attrezzo.nome }}</td>
+            <td class="px-2 py-1">{{ attrezzo.get_tipo_display }}</td>
+            <td class="px-2 py-1 text-center">
+              {% if attrezzo.is_active %}
+                <span class="text-success" title="Sì" aria-label="Sì">&#10003;</span>
+              {% else %}
+                <span class="text-muted" title="No" aria-label="No">&ndash;</span>
+              {% endif %}
+            </td>
+          </tr>
+        {% empty %}
+          <tr><td class="px-2 py-1 text-muted" colspan="3">Nessun attrezzo presente.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
   </div>
 
   <a class="btn" href="{% url 'crea_attrezzo' %}">Nuovo attrezzo</a>

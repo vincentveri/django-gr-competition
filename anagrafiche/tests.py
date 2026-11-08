@@ -193,7 +193,7 @@ class AutenticazioneTests(TestCase):
 
     def test_registration_creates_user_societa_and_profile(self):
         r = self.client.post("/registrazione/", self._registrazione())
-        self.assertRedirects(r, "/atleti/")
+        self.assertRedirects(r, "/societa/")
         user = get_user_model().objects.get(username="mario@example.com")
         self.assertEqual(user.profilo.societa.nome, "ASD Test")
         self.assertEqual(Profilo.objects.count(), 1)
@@ -217,7 +217,7 @@ class AutenticazioneTests(TestCase):
         self.client.post("/registrazione/", self._registrazione())
         self.client.post("/esci/")
         r = self.client.post("/accedi/", {"username": "MARIO@example.com", "password": "Sup3rSegreta!xyz"})
-        self.assertRedirects(r, "/atleti/")
+        self.assertRedirects(r, "/societa/")
 
     def test_invalid_societa_creates_nothing(self):
         r = self.client.post("/registrazione/", self._registrazione(**{"societa-nome": ""}))
@@ -235,7 +235,7 @@ class AutenticazioneTests(TestCase):
     def test_login_and_logout(self):
         get_user_model().objects.create_user("anna", password="Sup3rSegreta!xyz")
         r = self.client.post("/accedi/", {"username": "anna", "password": "Sup3rSegreta!xyz"})
-        self.assertRedirects(r, "/atleti/")
+        self.assertRedirects(r, "/societa/")
         self.client.post("/esci/")
         self.assertEqual(self.client.get("/atleti/").status_code, 302)
 
@@ -253,7 +253,14 @@ class IsolamentoSocietaTests(TestCase):
 
     def test_societa_list_shows_only_own(self):
         r = self.client.get("/societa/")
-        self.assertEqual(list(r.context["societa_list"]), [self.mia])
+        self.assertEqual([x["societa"] for x in r.context["riepiloghi"]], [self.mia])
+
+    def test_root_redirects_to_login_when_anonymous(self):
+        self.client.logout()
+        self.assertRedirects(self.client.get("/"), "/accedi/")
+
+    def test_root_redirects_to_summary_when_logged_in(self):
+        self.assertRedirects(self.client.get("/"), "/societa/")
 
     def test_other_societa_athlete_is_404(self):
         self.assertEqual(self.client.get(f"/atleti/{self.altro_atleta.pk}/").status_code, 404)
@@ -431,3 +438,12 @@ class TipoAttrezzoTests(TestCase):
         r = self.client.post(f"/atleti/{self.atleta.pk}/", data)
         self.assertEqual(r.status_code, 200)
         self.assertEqual(Esercizio.objects.count(), 0)
+
+
+class AttrezzoAttivoTests(TestCase):
+    def test_inactive_attrezzo_not_offered(self):
+        from .forms import EsercizioForm
+        attivo = Attrezzo.objects.create(nome="Fune")
+        Attrezzo.objects.create(nome="Palla", is_active=False)
+        self.assertTrue(Attrezzo.objects.get(pk=attivo.pk).is_active)
+        self.assertEqual(list(EsercizioForm().fields["attrezzo"].queryset), [attivo])

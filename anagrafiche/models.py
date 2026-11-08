@@ -18,6 +18,8 @@ class Attrezzo(models.Model):
     nome = models.CharField(max_length=100)
     # Which kind of exercise the apparatus is shown for.
     tipo = models.CharField(max_length=10, choices=TIPO_CHOICES, default=TIPO_ATLETA)
+    # Inactive apparatus are no longer offered when choosing an apparatus.
+    is_active = models.BooleanField("Attivo", default=True)
 
     def __str__(self):
         return self.nome

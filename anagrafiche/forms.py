@@ -1,6 +1,7 @@
 from django import forms
 from django.contrib.auth import get_user_model
 from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
+from django.db.models import Q
 from django.forms import BaseInlineFormSet, BaseModelFormSet, inlineformset_factory, modelformset_factory
 
 from .models import Atleta, Attrezzo, Esercizio, EsercizioSquadra, Societa, Squadra
@@ -39,7 +40,6 @@ class AtletaForm(forms.ModelForm):
             "nome",
             "cognome",
             "anno_nascita",
-            "email",
             "societa",
             "categoria",
             "fascia",
@@ -64,6 +64,14 @@ class AtletaForm(forms.ModelForm):
                 self.fields[nome].empty_label = EMPTY_LABEL
 
 
+def attrezzi_scelta(tipo, esercizio=None):
+    """Active apparatus of the given type; an exercise keeps showing its own, even if since deactivated."""
+    attivi = Q(is_active=True)
+    if esercizio is not None and esercizio.attrezzo_id:
+        attivi |= Q(pk=esercizio.attrezzo_id)
+    return Attrezzo.objects.filter(attivi, tipo=tipo)
+
+
 class EsercizioForm(forms.ModelForm):
     class Meta:
         model = Esercizio
@@ -74,7 +82,7 @@ class EsercizioForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         self.fields["attrezzo"].widget.attrs["class"] = "input"
         self.fields["attrezzo"].empty_label = EMPTY_LABEL
-        self.fields["attrezzo"].queryset = Attrezzo.objects.filter(tipo=Attrezzo.TIPO_ATLETA)
+        self.fields["attrezzo"].queryset = attrezzi_scelta(Attrezzo.TIPO_ATLETA, self.instance)
         self.fields["audio"].widget.attrs.update({
             "class": "input",
             "accept": ".mp3,.wav,.m4a,.ogg,audio/*",
@@ -123,13 +131,14 @@ def esercizio_formset_class(extra):
 class AttrezzoForm(forms.ModelForm):
     class Meta:
         model = Attrezzo
-        fields = ["nome", "tipo"]
-        labels = {"tipo": "Mostrato per"}
+        fields = ["nome", "tipo", "is_active"]
+        labels = {"tipo": "Mostrato per", "is_active": "Attivo"}
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        for field in self.fields.values():
-            field.widget.attrs["class"] = "input"
+        for nome, field in self.fields.items():
+            if nome != "is_active":
+                field.widget.attrs["class"] = "input"
 
 
 class BaseAtletaFormSet(BaseModelFormSet):
@@ -234,7 +243,7 @@ class EsercizioSquadraForm(EsercizioForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields["attrezzo"].queryset = Attrezzo.objects.filter(tipo=Attrezzo.TIPO_SQUADRA)
+        self.fields["attrezzo"].queryset = attrezzi_scelta(Attrezzo.TIPO_SQUADRA, self.instance)
 
 
 def esercizio_squadra_formset_class(extra):

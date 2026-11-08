@@ -12,6 +12,8 @@
 
     {% include "anagrafiche/_field.html" with field=form.tipo %}
 
+    <label class="flex items-center gap-2">{{ form.is_active }} {{ form.is_active.label }}</label>
+
     <div class="flex gap-3">
       <button type="submit" class="btn">Salva</button>
       <a class="menu-link w-auto" href="{% url 'lista_attrezzi' %}">Annulla</a>
