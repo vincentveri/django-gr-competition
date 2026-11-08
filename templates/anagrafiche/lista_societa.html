@@ -1,19 +1,55 @@
 {% extends "base.html" %}
 
-{% block title %}Società · GR Competition{% endblock %}
+{% block title %}Riepilogo · GR Competition{% endblock %}
 
 {% block content %}
-  <h1 class="mb-4">Società</h1>
+  <h1 class="mb-4">Riepilogo</h1>
 
-  <div class="box mb-4">
-    <ul>
-      {% for societa in societa_list %}
-        <li>{{ societa.nome }} - {{ societa.citta }}</li>
-      {% empty %}
-        <li class="text-muted">Nessuna società presente.</li>
-      {% endfor %}
-    </ul>
-  </div>
+  {% if messages %}{% for message in messages %}<p class="mb-4 text-success">{{ message }}</p>{% endfor %}{% endif %}
 
-  <a class="btn" href="{% url 'crea_societa' %}">Nuova società</a>
+  {% for r in riepiloghi %}
+    <div class="box mb-4">
+      <h2 class="mb-3 font-semibold">{{ r.societa.nome }}</h2>
+      <dl class="grid gap-x-6 gap-y-2 sm:grid-cols-2">
+        <div><dt class="text-muted">Codice fiscale</dt><dd>{{ r.societa.codice_fiscale }}</dd></div>
+        <div><dt class="text-muted">Partita IVA</dt><dd>{{ r.societa.partita_iva|default:"–" }}</dd></div>
+        <div><dt class="text-muted">Indirizzo</dt><dd>{{ r.societa.indirizzo|default:"–" }} {{ r.societa.numero_civico|default:"" }}{% if r.societa.cap or r.societa.citta %}, {{ r.societa.cap|default:"" }} {{ r.societa.citta|default:"" }}{% endif %}</dd></div>
+        <div><dt class="text-muted">Telefono</dt><dd>{{ r.societa.telefono|default:"–" }}</dd></div>
+        <div><dt class="text-muted">Email</dt><dd>{{ r.societa.email }}</dd></div>
+        <div><dt class="text-muted">Atleti / Squadre</dt><dd>{{ r.atleti|length }} / {{ r.num_squadre }}</dd></div>
+      </dl>
+    </div>
+
+    <div class="box mb-4 overflow-x-auto p-0">
+      <table class="w-full border-collapse text-left">
+        <thead class="border-b border-line bg-background text-muted">
+          <tr>
+            <th class="px-2 py-1 font-medium">Cognome e nome</th>
+            <th class="px-2 py-1 font-medium">Anno</th>
+            <th class="px-2 py-1 font-medium">Categoria</th>
+            <th class="px-2 py-1 font-medium">Fascia</th>
+            <th class="px-2 py-1 font-medium">Livello</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for atleta in r.atleti %}
+            <tr class="odd:bg-surface even:bg-background">
+              <td class="px-2 py-1"><a class="text-primary hover:underline" href="{% url 'dettaglio_atleta' atleta.pk %}">{{ atleta.cognome }} {{ atleta.nome }}</a></td>
+              <td class="px-2 py-1">{{ atleta.anno_nascita|default_if_none:"" }}</td>
+              <td class="px-2 py-1">{{ atleta.categoria|default_if_none:"" }}</td>
+              <td class="px-2 py-1">{{ atleta.fascia|default_if_none:"" }}</td>
+              <td class="px-2 py-1">{{ atleta.livello|default_if_none:"" }}</td>
+            </tr>
+          {% empty %}
+            <tr><td class="px-2 py-1 text-muted" colspan="5">Nessun atleta presente.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% empty %}
+    <p class="mb-4 text-muted">Nessuna società presente.</p>
+  {% endfor %}
+
+  <a class="btn" href="{% url 'crea_atleta' %}">Nuovo atleta</a>
+  {% if user.is_superuser %}<a class="btn" href="{% url 'crea_societa' %}">Nuova società</a>{% endif %}
 {% endblock %}

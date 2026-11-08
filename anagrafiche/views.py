@@ -45,10 +45,29 @@ def squadre_visibili(user):
     return Squadra.objects.filter(societa=societa) if societa else Squadra.objects.none()
 
 
+def home(request):
+    """Root URL: the società summary when logged in, the login form otherwise."""
+    if request.user.is_authenticated:
+        return redirect('lista_societa')
+    return redirect('login')
+
+
 @login_required
 def lista_societa(request):
-    societa = societa_visibili(request.user)
-    return render(request, 'anagrafiche/lista_societa.html', {'societa_list': societa})
+    """Summary of the user's own società and its athletes (superusers see every società)."""
+    riepiloghi = []
+    for societa in societa_visibili(request.user):
+        atleti = list(
+            Atleta.objects.filter(societa=societa)
+            .select_related('categoria', 'fascia', 'livello')
+            .order_by('cognome', 'nome')
+        )
+        riepiloghi.append({
+            'societa': societa,
+            'atleti': atleti,
+            'num_squadre': Squadra.objects.filter(societa=societa).count(),
+        })
+    return render(request, 'anagrafiche/lista_societa.html', {'riepiloghi': riepiloghi})
 
 
 @login_required
@@ -180,7 +199,7 @@ def crea_atleti_multipli(request):
 
 def registrazione(request):
     if request.user.is_authenticated:
-        return redirect('lista_atleti')
+        return redirect('lista_societa')
 
     account_form = AccountForm(request.POST or None, prefix='account')
     societa_form = RegistrazioneSocietaForm(request.POST or None, prefix='societa')
@@ -195,7 +214,7 @@ def registrazione(request):
             Profilo.objects.create(utente=utente, societa=societa)
         login(request, utente)
         messages.success(request, "Registrazione completata.")
-        return redirect('lista_atleti')
+        return redirect('lista_societa')
 
     return render(request, 'anagrafiche/registrazione.html', {
         'account_form': account_form,

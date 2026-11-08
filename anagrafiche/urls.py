@@ -5,6 +5,7 @@ from . import views
 from .forms import AccessoForm
 
 urlpatterns = [
+    path('', views.home, name='home'),
     path('accedi/', auth_views.LoginView.as_view(
         template_name='anagrafiche/accedi.html',
         authentication_form=AccessoForm,

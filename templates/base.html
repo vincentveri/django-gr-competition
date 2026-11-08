@@ -52,7 +52,7 @@
         <nav>
           <p class="menu-label">Anagrafiche</p>
           <ul class="space-y-1">
-            <li><a href="{% url 'lista_societa' %}" class="menu-link{% if current == 'lista_societa' %} is-active{% endif %}">Società</a></li>
+            <li><a href="{% url 'lista_societa' %}" class="menu-link{% if current == 'lista_societa' %} is-active{% endif %}">Riepilogo</a></li>
             {% if user.is_superuser %}
             <li><a href="{% url 'crea_societa' %}" class="menu-link{% if current == 'crea_societa' %} is-active{% endif %}">Nuova società</a></li>
             {% endif %}
